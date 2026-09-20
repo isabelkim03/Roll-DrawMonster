@@ -9,18 +9,18 @@ interface DrawingCanvasProps {
 }
 
 const PALETTE = [
-  { name: 'Black', hex: '#1E293B' },
+  { name: 'Charcoal Black', hex: '#1E293B' },
+  { name: 'Kawaii Pink', hex: '#F472B6' },
+  { name: 'Pastel Baby Pink', hex: '#FBCFE8' },
+  { name: 'Lilac Lavender', hex: '#C084FC' },
+  { name: 'Baby Sky Blue', hex: '#38BDF8' },
+  { name: 'Pastel Mint', hex: '#34D399' },
+  { name: 'Buttercup Yellow', hex: '#FDE047' },
+  { name: 'Sweet Peach', hex: '#FB923C' },
+  { name: 'Cherry Rose', hex: '#F43F5E' },
   { name: 'Blue', hex: '#2563EB' },
-  { name: 'Cyan', hex: '#06B6D4' },
-  { name: 'Green', hex: '#16A34A' },
-  { name: 'Lime', hex: '#84CC16' },
-  { name: 'Yellow', hex: '#EAB308' },
-  { name: 'Orange', hex: '#F97316' },
-  { name: 'Red', hex: '#EF4444' },
-  { name: 'Pink', hex: '#EC4899' },
-  { name: 'Purple', hex: '#9333EA' },
-  { name: 'Brown', hex: '#92400E' },
-  { name: 'White', hex: '#FFFFFF' },
+  { name: 'Teddy Brown', hex: '#92400E' },
+  { name: 'Marshmallow White', hex: '#FFFFFF' },
 ];
 
 const STROKE_SIZES = [
@@ -46,145 +46,111 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState<number>(-1);
 
-  // Keep a stable ref for onCanvasSave to avoid re-triggering effects and callbacks
   const onCanvasSaveRef = useRef(onCanvasSave);
   useEffect(() => {
     onCanvasSaveRef.current = onCanvasSave;
   });
 
-  // Save current canvas state to history and parent
   const saveState = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const dataUrl = canvas.toDataURL('image/png');
-    
-    setHistory(prev => {
+
+    setHistory((prev) => {
       const updated = prev.slice(0, historyIndex + 1);
       return [...updated, dataUrl];
     });
-    setHistoryIndex(prev => prev + 1);
+    setHistoryIndex((prev) => prev + 1);
     onCanvasSaveRef.current(dataUrl);
   }, [historyIndex]);
 
-  // Initialize canvas size and background
+  const CANVAS_WIDTH = 900;
+  const CANVAS_HEIGHT = 675; // 4:3 high-res ratio
+
+  // Canvas initialization with internal coordinate resolution
   useEffect(() => {
     const canvas = canvasRef.current;
-    const container = containerRef.current;
-    if (!canvas || !container) return;
-
-    const rect = container.getBoundingClientRect();
-    const width = Math.max(Math.floor(rect.width) || 750, 320);
-    const height = Math.max(Math.floor(rect.height) || 460, 320);
-
-    if (canvas.width !== width || canvas.height !== height) {
-      canvas.width = width;
-      canvas.height = height;
-
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        // Draw crisp off-white monster drawing paper
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, width, height);
-
-        // Subtle soft grid dots to aid kid drawing
-        ctx.fillStyle = '#F1F5F9';
-        const gap = 32;
-        for (let x = gap; x < width; x += gap) {
-          for (let y = gap; y < height; y += gap) {
-            ctx.beginPath();
-            ctx.arc(x, y, 1.5, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        }
-
-        if (initialDataUrl) {
-          const img = new Image();
-          img.onload = () => {
-            ctx.drawImage(img, 0, 0, width, height);
-            const initialSave = canvas.toDataURL('image/png');
-            setHistory([initialSave]);
-            setHistoryIndex(0);
-            onCanvasSave(initialSave);
-          };
-          img.src = initialDataUrl;
-        } else {
-          const initialSave = canvas.toDataURL('image/png');
-          setHistory([initialSave]);
-          setHistoryIndex(0);
-          onCanvasSave(initialSave);
-        }
-      }
-    }
-
-    return () => {
-      if (canvasRef.current) {
-        try {
-          const finalUrl = canvasRef.current.toDataURL('image/png');
-          onCanvasSaveRef.current(finalUrl);
-        } catch {
-          // ignore
-        }
-      }
-    };
-  }, []);
-
-  // Pointer event coordinates relative to canvas
-  const getCanvasCoords = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    return {
-      x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top) * scaleY
-    };
-  };
-
-  const startDrawing = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
     if (!canvas) return;
-    canvas.setPointerCapture(e.pointerId);
+
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    if (initialDataUrl) {
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        const currentUrl = canvas.toDataURL('image/png');
+        setHistory([currentUrl]);
+        setHistoryIndex(0);
+      };
+      img.src = initialDataUrl;
+    } else {
+      const currentUrl = canvas.toDataURL('image/png');
+      setHistory([currentUrl]);
+      setHistoryIndex(0);
+    }
+  }, []);
+
+  const getPos = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / (rect.width || 1);
+    const scaleY = canvas.height / (rect.height || 1);
+
+    let clientX = 0;
+    let clientY = 0;
+    if ('touches' in e && e.touches.length > 0) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      const mouseEvent = e as React.MouseEvent<HTMLCanvasElement>;
+      clientX = mouseEvent.clientX;
+      clientY = mouseEvent.clientY;
+    }
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
+    };
+  };
+
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const { x, y } = getPos(e);
     setIsDrawing(true);
-    const { x, y } = getCanvasCoords(e);
 
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.lineWidth = isEraser ? strokeWidth * 2.2 : strokeWidth;
+    ctx.lineWidth = isEraser ? strokeWidth * 2.5 : strokeWidth;
     ctx.strokeStyle = isEraser ? '#FFFFFF' : currentColor;
-
-    // Draw dot for single tap
-    ctx.arc(x, y, (isEraser ? strokeWidth * 2.2 : strokeWidth) / 4, 0, Math.PI * 2);
-    ctx.fillStyle = isEraser ? '#FFFFFF' : currentColor;
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(x, y);
   };
 
-  const draw = (e: React.PointerEvent<HTMLCanvasElement>) => {
+  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const { x, y } = getCanvasCoords(e);
+    const { x, y } = getPos(e);
     ctx.lineTo(x, y);
     ctx.stroke();
   };
 
-  const stopDrawing = (e: React.PointerEvent<HTMLCanvasElement>) => {
+  const stopDrawing = () => {
     if (!isDrawing) return;
-    const canvas = canvasRef.current;
-    if (canvas && canvas.hasPointerCapture(e.pointerId)) {
-      canvas.releasePointerCapture(e.pointerId);
-    }
     setIsDrawing(false);
     saveState();
   };
@@ -192,46 +158,37 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const handleUndo = () => {
     if (historyIndex <= 0) return;
     playClick();
-    const newIdx = historyIndex - 1;
-    const targetDataUrl = history[newIdx];
-    const canvas = canvasRef.current;
-    if (!canvas || !targetDataUrl) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const img = new Image();
-    img.onload = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0);
-      setHistoryIndex(newIdx);
-      onCanvasSave(targetDataUrl);
-    };
-    img.src = targetDataUrl;
+    const newIndex = historyIndex - 1;
+    restoreFromHistory(newIndex);
   };
 
   const handleRedo = () => {
     if (historyIndex >= history.length - 1) return;
     playClick();
-    const newIdx = historyIndex + 1;
-    const targetDataUrl = history[newIdx];
-    const canvas = canvasRef.current;
-    if (!canvas || !targetDataUrl) return;
+    const newIndex = historyIndex + 1;
+    restoreFromHistory(newIndex);
+  };
 
+  const restoreFromHistory = (index: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    const targetUrl = history[index];
+    if (!targetUrl) return;
 
     const img = new Image();
     img.onload = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
-      setHistoryIndex(newIdx);
-      onCanvasSave(targetDataUrl);
+      setHistoryIndex(index);
+      onCanvasSaveRef.current(targetUrl);
     };
-    img.src = targetDataUrl;
+    img.src = targetUrl;
   };
 
-  const handleClearAll = () => {
+  const handleClear = () => {
     playClick();
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -240,109 +197,100 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
 
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Subtle dots
-    ctx.fillStyle = '#F1F5F9';
-    const gap = 32;
-    for (let x = gap; x < canvas.width; x += gap) {
-      for (let y = gap; y < canvas.height; y += gap) {
-        ctx.beginPath();
-        ctx.arc(x, y, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
     saveState();
   };
 
   return (
-    <div className={`flex flex-col h-full w-full ${className}`}>
-      {/* Canvas Box */}
-      <div 
-        ref={containerRef} 
-        className="relative flex-1 w-full bg-white rounded-2xl shadow-inner border-4 border-amber-200 overflow-hidden"
+    <div className={`flex flex-col h-full w-full min-h-0 ${className}`}>
+      {/* Canvas Area with touch-none */}
+      <div
+        ref={containerRef}
+        className="flex-1 w-full min-h-[180px] sm:min-h-[320px] bg-white rounded-2xl sm:rounded-3xl border-3 sm:border-4 border-pink-300 shadow-inner relative overflow-hidden cursor-crosshair touch-none flex items-center justify-center"
       >
         <canvas
           ref={canvasRef}
-          onPointerDown={startDrawing}
-          onPointerMove={draw}
-          onPointerUp={stopDrawing}
-          onPointerCancel={stopDrawing}
-          style={{ touchAction: 'none' }}
-          className="w-full h-full cursor-crosshair block"
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={stopDrawing}
+          onMouseLeave={stopDrawing}
+          onTouchStart={startDrawing}
+          onTouchMove={draw}
+          onTouchEnd={stopDrawing}
+          className="w-full h-full block object-contain"
         />
-
-        {/* Quick action buttons on canvas top-right */}
-        <div className="absolute top-3 right-3 flex items-center gap-2 bg-white/90 backdrop-blur-xs p-1.5 rounded-xl border border-slate-200 shadow-sm">
-          <button
-            type="button"
-            onClick={handleUndo}
-            disabled={historyIndex <= 0}
-            className="p-2 text-slate-700 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent rounded-lg transition-all"
-            title="Undo"
-          >
-            <RotateCcw className="w-5 h-5" />
-          </button>
-          <button
-            type="button"
-            onClick={handleRedo}
-            disabled={historyIndex >= history.length - 1}
-            className="p-2 text-slate-700 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent rounded-lg transition-all"
-            title="Redo"
-          >
-            <RotateCw className="w-5 h-5" />
-          </button>
-          <div className="w-px h-5 bg-slate-200" />
-          <button
-            type="button"
-            onClick={handleClearAll}
-            className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
-            title="Clear all"
-          >
-            <Trash2 className="w-5 h-5" />
-          </button>
-        </div>
       </div>
 
-      {/* Tool & Palette Bar (Below Canvas) */}
-      <div className="mt-3 bg-white px-4 py-2.5 rounded-2xl border-2 border-slate-200 shadow-sm flex items-center justify-between gap-4 flex-wrap">
-        {/* Tool Mode: Pen / Eraser */}
-        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
+      {/* Drawing Toolbar: Pen / Eraser / Brush size / Undo / Redo / Clear / Color palette */}
+      <div className="mt-2 bg-white/95 backdrop-blur-md p-1.5 sm:p-2.5 rounded-2xl border-2 border-pink-200 shadow-xs flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 shrink-0">
+        {/* Tool Selector & History Buttons */}
+        <div className="flex items-center gap-1 sm:gap-1.5">
           <button
             type="button"
             onClick={() => {
               playClick();
               setIsEraser(false);
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${
+            className={`flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-black transition-all ${
               !isEraser
-                ? 'bg-amber-400 text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-pink-500 text-white shadow-xs'
+                : 'text-slate-600 hover:bg-pink-50'
             }`}
           >
-            <Pencil className="w-4 h-4" />
-            <span>펜 (Pen)</span>
+            <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>펜</span>
           </button>
+
           <button
             type="button"
             onClick={() => {
               playClick();
               setIsEraser(true);
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${
+            className={`flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-black transition-all ${
               isEraser
-                ? 'bg-pink-500 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-purple-500 text-white shadow-xs'
+                : 'text-slate-600 hover:bg-pink-50'
             }`}
           >
-            <Eraser className="w-4 h-4" />
-            <span>지우개 (Eraser)</span>
+            <Eraser className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>지우개</span>
+          </button>
+
+          <div className="h-4 w-px bg-slate-200 mx-0.5" />
+
+          {/* Undo / Redo */}
+          <button
+            type="button"
+            disabled={historyIndex <= 0}
+            onClick={handleUndo}
+            className="p-1 sm:p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-30 active:scale-95"
+            title="실행 취소 (Undo)"
+          >
+            <RotateCcw className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            disabled={historyIndex >= history.length - 1}
+            onClick={handleRedo}
+            className="p-1 sm:p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-30 active:scale-95"
+            title="다시 실행 (Redo)"
+          >
+            <RotateCw className="w-4 h-4" />
+          </button>
+
+          <button
+            type="button"
+            onClick={handleClear}
+            className="p-1 sm:p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 active:scale-95"
+            title="전체 지우기 (Clear)"
+          >
+            <Trash2 className="w-4 h-4" />
           </button>
         </div>
 
         {/* Brush Size Selector */}
-        <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
-          {STROKE_SIZES.map(item => (
+        <div className="flex items-center gap-0.5 sm:gap-1 bg-slate-100 p-0.5 rounded-xl">
+          {STROKE_SIZES.map((item) => (
             <button
               key={item.label}
               type="button"
@@ -350,22 +298,20 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                 playClick();
                 setStrokeWidth(item.size);
               }}
-              className={`w-9 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-all ${
+              className={`w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-lg font-bold text-xs transition-all ${
                 strokeWidth === item.size
                   ? 'bg-white text-slate-900 shadow-xs border border-slate-300'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              <div
-                className={`${item.dotSize} rounded-full bg-current`}
-              />
+              <div className={`${item.dotSize} rounded-full bg-current`} />
             </button>
           ))}
         </div>
 
-        {/* Color Palette */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {PALETTE.map(c => {
+        {/* Color Palette (horizontally scrollable if screen is narrow) */}
+        <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto max-w-full py-0.5 no-scrollbar">
+          {PALETTE.map((c) => {
             const isSelected = !isEraser && currentColor === c.hex;
             return (
               <button
@@ -376,7 +322,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                   setCurrentColor(c.hex);
                   setIsEraser(false);
                 }}
-                className={`w-7 h-7 rounded-full transition-transform border-2 ${
+                className={`w-5 h-5 sm:w-7 sm:h-7 rounded-full shrink-0 transition-transform border-2 ${
                   isSelected
                     ? 'scale-125 border-slate-900 ring-2 ring-amber-400 z-10'
                     : 'border-slate-300 hover:scale-110'

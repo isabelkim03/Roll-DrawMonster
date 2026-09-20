@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
-import { Star, RotateCcw, Home, Download, Volume2, Sparkles, Award, ChevronLeft } from 'lucide-react';
+import { Star, RotateCcw, Home, Download, Volume2, Sparkles, Award } from 'lucide-react';
 import { BodyPart } from '../types';
 import { BodyPartIcon } from './BodyPartIcon';
 import { speakEnglish, playClick, playStarEarned } from '../utils/audio';
@@ -21,9 +21,10 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
   totalStars = 2,
   learnedParts,
   onPlayAgain,
-  onGoHome,
-  onPrev
+  onGoHome
 }) => {
+  const hasSpokenRef = useRef(false);
+
   useEffect(() => {
     try {
       confetti({
@@ -35,13 +36,20 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
       // ignore
     }
 
-    playStarEarned();
-    speakEnglish("Mission Complete! Super job!");
+    if (!hasSpokenRef.current) {
+      hasSpokenRef.current = true;
+      playStarEarned();
+      // Small 250ms comfortable breath pause before announcing Mission Complete
+      const timer = setTimeout(() => {
+        speakEnglish("Mission Complete! Super job!");
+      }, 250);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
-  const handleSpeakWord = (word: string, korean: string) => {
+  const handleSpeakWord = (word: string) => {
     playClick();
-    speakEnglish(`${word}`);
+    speakEnglish(word);
   };
 
   const handleDownloadMonster = () => {
@@ -54,172 +62,130 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-between p-4 md:p-6 max-w-5xl mx-auto w-full h-full select-none overflow-y-auto">
-      {/* Top Header: Mission Complete! */}
-      <div className="text-center pt-1">
+    <div className="flex-1 flex flex-col items-center justify-between p-3 sm:p-6 max-w-5xl mx-auto w-full min-h-full select-none overflow-y-auto pb-12">
+      {/* Top Header */}
+      <div className="text-center pt-1 shrink-0">
         <div className="inline-flex items-center gap-2">
-          <Sparkles className="w-8 h-8 text-amber-500 animate-pulse" />
-          <h2 className="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600">
+          <span className="text-2xl sm:text-3xl animate-bounce">🎀</span>
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-sky-500">
             Mission Complete!
           </h2>
-          <Sparkles className="w-8 h-8 text-amber-500 animate-pulse" />
         </div>
-        <p className="text-sm md:text-base font-bold text-slate-600 mt-1">
-          모든 미션을 완수하고 나만의 멋진 몬스터를 완성했어요! 🏆
+        <p className="mt-1 text-sm sm:text-lg font-black text-pink-900/80">
+          모든 라운드와 미션을 사랑스럽게 성공했어요! 축하합니다! 💖🎉
         </p>
       </div>
 
-      {/* Center Section: Monster Artwork + Stars */}
-      <div className="flex flex-col items-center my-3 w-full">
-        {/* Child's monster in framed exhibition card */}
-        <div className="relative p-3 md:p-4 bg-white rounded-3xl border-4 border-amber-300 shadow-xl max-w-sm w-full aspect-[4/3] flex items-center justify-center overflow-hidden group">
-          {/* Top cute badge */}
-          <div className="absolute top-2 left-3 bg-gradient-to-r from-amber-400 to-rose-400 text-white text-xs px-3 py-1 rounded-full font-black shadow-sm flex items-center gap-1 z-10">
-            <span>✨</span>
-            <span>귀여운 몬스터 탄생!</span>
+      {/* Center Layout: Left Monster Drawing + Right Learned Words */}
+      <div className="my-auto py-2 sm:py-3 grid grid-cols-1 landscape:grid-cols-2 md:grid-cols-2 gap-3 sm:gap-6 w-full max-w-4xl shrink-0">
+        {/* Left Column: Monster Portrait */}
+        <div className="bg-white/95 rounded-2xl sm:rounded-3xl border-3 sm:border-4 border-pink-300 p-3 sm:p-5 shadow-lg shadow-pink-100/70 flex flex-col items-center justify-center text-center relative">
+          <div className="w-36 h-36 sm:w-56 sm:h-56 rounded-2xl bg-pink-50/50 border-2 border-dashed border-pink-200 overflow-hidden flex items-center justify-center p-2 mt-2">
+            {monsterImageUrl ? (
+              <img
+                src={monsterImageUrl}
+                alt="Completed Monster"
+                className="w-full h-full object-contain"
+              />
+            ) : (
+              <span className="text-4xl">👾</span>
+            )}
           </div>
 
-          {monsterImageUrl ? (
-            <img
-              src={monsterImageUrl}
-              alt="My Finished Monster"
-              className="w-full h-full object-contain rounded-2xl"
-            />
-          ) : (
-            <div className="flex flex-col items-center text-slate-400">
-              {/* Cute Chibi Monster Fallback */}
-              <svg width="100" height="100" viewBox="0 0 64 64" fill="none">
-                <circle cx="32" cy="32" r="28" fill="#6EE7B7" stroke="#0F172A" strokeWidth="3" />
-                <circle cx="24" cy="28" r="4.5" fill="#0F172A" />
-                <circle cx="26" cy="26" r="1.5" fill="#FFFFFF" />
-                <circle cx="40" cy="28" r="4.5" fill="#0F172A" />
-                <circle cx="42" cy="26" r="1.5" fill="#FFFFFF" />
-                <ellipse cx="18" cy="36" rx="4" ry="2.5" fill="#FB7185" opacity="0.8" />
-                <ellipse cx="46" cy="36" rx="4" ry="2.5" fill="#FB7185" opacity="0.8" />
-                <path d="M28 36 Q32 42 36 36" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round" />
-              </svg>
-              <span className="font-bold text-sm text-slate-500 mt-1">세상에 단 하나뿐인 내 몬스터</span>
-            </div>
-          )}
-        </div>
-
-        {/* 획득한 별 2/2 형식 (화면 중앙 아래) */}
-        <div className="mt-3 flex items-center gap-3 bg-amber-50 border-2 border-amber-300 px-6 py-2 rounded-full shadow-sm">
-          <div className="flex items-center gap-1">
-            {Array.from({ length: totalStars }).map((_, i) => (
+          {/* Stars Earned */}
+          <div className="mt-2 sm:mt-3 flex items-center gap-1.5 bg-pink-50 border border-pink-200 px-3 sm:px-4 py-1 rounded-full">
+            <span className="text-xs sm:text-sm font-black text-pink-900">획득한 별:</span>
+            {Array.from({ length: totalStars }).map((_, idx) => (
               <Star
-                key={i}
-                className={`w-7 h-7 ${
-                  i < stars
-                    ? 'fill-amber-400 text-amber-500 animate-pulse-gentle'
+                key={idx}
+                className={`w-4 h-4 sm:w-5 sm:h-5 ${
+                  idx < stars
+                    ? 'fill-amber-300 text-amber-400 animate-bounce'
                     : 'text-slate-300'
                 }`}
               />
             ))}
           </div>
-          <span className="text-2xl font-black text-amber-950">
-            획득한 별 {stars}/{totalStars}
-          </span>
-        </div>
-      </div>
 
-      {/* 이번 판에서 학습한 5개의 신체 부위 단어 목록 (화면 하단) */}
-      <div className="w-full bg-white p-4 rounded-3xl border-2 border-slate-200 shadow-sm mb-3">
-        <div className="flex items-center justify-between mb-3 px-2">
-          <span className="text-base font-black text-slate-800 flex items-center gap-2">
-            <span>오늘 학습한 5개 신체 부위 단어</span>
-            <span className="text-xs bg-indigo-100 text-indigo-700 px-2.5 py-0.5 rounded-full font-bold">
-              5 Words
-            </span>
-          </span>
-          <span className="text-xs text-slate-400 font-bold hidden sm:inline">
-            스피커를 누르면 다시 발음을 들을 수 있어요!
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-          {learnedParts.map((part) => (
-            <div
-              key={part.id}
-              onClick={() => handleSpeakWord(part.word, part.korean)}
-              className="flex flex-col items-center p-2 rounded-2xl border border-slate-100 bg-slate-50 hover:bg-amber-50 hover:border-amber-300 transition-all cursor-pointer group shadow-2xs"
+          {monsterImageUrl && (
+            <button
+              type="button"
+              onClick={handleDownloadMonster}
+              className="mt-2 sm:mt-3 px-4 sm:px-5 py-1.5 sm:py-2 bg-pink-500 hover:bg-pink-600 active:scale-95 text-white font-black text-xs sm:text-sm rounded-full shadow-xs transition-all flex items-center gap-1.5"
             >
-              <div className="w-12 h-12 flex items-center justify-center">
-                <BodyPartIcon id={part.id} size={40} />
-              </div>
-              <span className="font-black text-slate-800 text-base mt-1 group-hover:text-amber-700 transition-colors">
-                {part.word}
-              </span>
-              <span className="text-xs text-slate-500 font-bold">
-                {part.korean}
-              </span>
-              <button
-                type="button"
-                className="mt-1 p-1 text-amber-600 group-hover:text-amber-700 rounded-full hover:bg-amber-100 transition-colors"
-                title="발음 듣기"
-              >
-                <Volume2 className="w-4 h-4" />
-              </button>
+              <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span>몬스터 그림 저장하기</span>
+            </button>
+          )}
+        </div>
+
+        {/* Right Column: Learned English Words Card */}
+        <div className="bg-white/95 rounded-2xl sm:rounded-3xl border-3 border-pink-200 p-3 sm:p-5 shadow-lg flex flex-col justify-between">
+          <div>
+            <h3 className="text-sm sm:text-lg font-black text-pink-900 mb-2 flex items-center gap-1.5 sm:gap-2">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-pink-500" />
+              <span>오늘 배운 신체 영어 단어장 (탭하여 듣기)</span>
+            </h3>
+            <div className="grid grid-cols-2 gap-1.5 sm:gap-2 max-h-48 sm:max-h-56 overflow-y-auto pr-1">
+              {learnedParts.map((part) => (
+                <button
+                  key={part.id}
+                  type="button"
+                  onClick={() => handleSpeakWord(part.word)}
+                  className="p-1.5 sm:p-2.5 rounded-xl bg-white hover:bg-stone-50 border-2 border-stone-800 shadow-xs flex items-center justify-between text-left transition-transform active:scale-95 group relative"
+                >
+                  {/* Small hole punch */}
+                  <div className="absolute top-1 left-1 w-1.5 h-1.5 rounded-full border border-stone-400 bg-stone-100" />
+                  <div className="flex items-center gap-1.5 sm:gap-2 pl-1">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center shrink-0">
+                      <BodyPartIcon id={part.id} size={30} />
+                    </div>
+                    <div>
+                      <div className="text-xs sm:text-sm font-bold text-stone-900 group-hover:text-blue-600 font-sans">
+                        {part.displayWord || `${part.word}(s)`}
+                      </div>
+                      <div className="text-[10px] sm:text-xs font-bold text-stone-400">
+                        {part.korean}
+                      </div>
+                    </div>
+                  </div>
+                  <Volume2 className="w-4 h-4 text-blue-500 opacity-60 group-hover:opacity-100 shrink-0" />
+                </button>
+              ))}
             </div>
-          ))}
+          </div>
+
+          <div className="mt-3 p-2 sm:p-2.5 rounded-2xl bg-gradient-to-r from-pink-100 via-purple-100 to-sky-100 text-pink-900 text-[11px] sm:text-xs font-black text-center border border-pink-200">
+            영어 단어를 예쁘게 소리 내어 따라 말해보세요! 🗣️💖
+          </div>
         </div>
       </div>
 
-      {/* Action Buttons: [이전으로] / [다시 하기] / [처음으로] / [저장하기] */}
-      <div className="flex items-center justify-center gap-3 flex-wrap pb-2 w-full">
-        {/* [이전으로] 버튼 */}
-        {onPrev && (
-          <button
-            type="button"
-            onClick={() => {
-              playClick();
-              onPrev();
-            }}
-            className="py-3 px-5 bg-white hover:bg-slate-100 text-slate-700 font-black text-base md:text-lg rounded-2xl border-2 border-slate-300 shadow-xs hover:scale-103 active:scale-95 transition-all flex items-center gap-1.5"
-            title="이전으로 이동"
-          >
-            <ChevronLeft className="w-5 h-5 stroke-[3]" />
-            <span>이전으로</span>
-          </button>
-        )}
-
-        {/* [다시 하기] 버튼 */}
+      {/* Bottom Action Buttons */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 pb-6 w-full max-w-md shrink-0">
         <button
           type="button"
           onClick={() => {
             playClick();
             onPlayAgain();
           }}
-          className="py-3 px-6 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-lg rounded-2xl shadow-md hover:scale-103 active:scale-95 transition-all flex items-center gap-2 border-2 border-white"
+          className="w-full sm:w-auto flex-1 py-3.5 sm:py-4 px-6 sm:px-8 bg-gradient-to-r from-pink-400 via-rose-400 to-purple-400 hover:from-pink-500 hover:to-purple-500 active:scale-95 text-white font-black text-base sm:text-lg rounded-full shadow-lg shadow-pink-200/80 transition-all flex items-center justify-center gap-2.5 border-2 border-white"
         >
           <RotateCcw className="w-5 h-5" />
-          <span>다시 하기</span>
+          <span>새로운 몬스터 그리기</span>
         </button>
 
-        {/* [처음으로] 버튼 */}
         <button
           type="button"
           onClick={() => {
             playClick();
             onGoHome();
           }}
-          className="py-3 px-6 bg-white hover:bg-slate-100 text-slate-700 font-black text-lg rounded-2xl border-2 border-slate-300 shadow-sm hover:scale-103 active:scale-95 transition-all flex items-center gap-2"
+          className="w-full sm:w-auto py-3 sm:py-4 px-5 sm:px-6 bg-white hover:bg-slate-100 active:scale-95 text-slate-700 font-black text-sm sm:text-base rounded-2xl shadow-xs border-2 border-slate-200 transition-all flex items-center justify-center gap-2"
         >
-          <Home className="w-5 h-5 text-slate-500" />
+          <Home className="w-5 h-5" />
           <span>처음으로</span>
         </button>
-
-        {/* [그림 다운로드] */}
-        {monsterImageUrl && (
-          <button
-            type="button"
-            onClick={handleDownloadMonster}
-            className="py-3 px-6 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-base rounded-2xl border-2 border-indigo-200 transition-all flex items-center gap-2"
-          >
-            <Download className="w-5 h-5" />
-            <span>몬스터 저장하기</span>
-          </button>
-        )}
       </div>
     </div>
   );

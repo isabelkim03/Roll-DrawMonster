@@ -3,6 +3,7 @@ import { Volume2, ArrowRight, CheckCircle, ChevronLeft } from 'lucide-react';
 import { DiceResult } from '../types';
 import { DrawingCanvas } from './DrawingCanvas';
 import { speakEnglish, playClick, playSuccessChime } from '../utils/audio';
+import { getSpokenInstruction } from '../utils/plural';
 
 interface DrawingScreenProps {
   currentRound: number;
@@ -27,7 +28,8 @@ export const DrawingScreen: React.FC<DrawingScreenProps> = ({
 
   const handleSpeakInstruction = () => {
     playClick();
-    speakEnglish(diceResult.instruction);
+    const toSpeak = diceResult.spokenInstruction || getSpokenInstruction(diceResult.count, diceResult.bodyPart.word);
+    speakEnglish(toSpeak);
   };
 
   const handleNextClick = () => {
@@ -44,19 +46,19 @@ export const DrawingScreen: React.FC<DrawingScreenProps> = ({
   const isFinalRound = currentRound === totalRounds;
 
   return (
-    <div className="flex-1 flex flex-col p-4 md:p-6 max-w-6xl mx-auto w-full h-full select-none">
-      {/* Top Banner: 주사위 결과 안내 `Draw 3 eyes!` + [스피커] 버튼 */}
-      <div className="flex items-center justify-between gap-4 mb-3 px-4 py-3 bg-gradient-to-r from-amber-100 via-orange-50 to-pink-100 rounded-2xl border-2 border-amber-300 shadow-xs">
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-xl md:text-3xl font-black text-amber-950 tracking-tight">
+    <div className="flex-1 flex flex-col p-2 sm:p-4 max-w-6xl mx-auto w-full h-full select-none min-h-0">
+      {/* Top Banner: 주사위 결과 안내 `Draw 3 eyes!` + [스피커] 버튼 + [다음] 버튼 */}
+      <div className="flex items-center justify-between gap-2 mb-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-pink-100 via-purple-50 to-sky-100 rounded-2xl sm:rounded-3xl border-2 border-pink-200 shadow-xs shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap">
+          <span className="text-base sm:text-2xl md:text-3xl font-black text-pink-950 tracking-tight">
             {diceResult.instruction}
           </span>
-          <span className="text-sm md:text-base font-bold text-amber-800 bg-white/80 px-2.5 py-1 rounded-lg border border-amber-200">
-            {diceResult.bodyPart.korean} {diceResult.count}개를 그려주세요!
+          <span className="text-[11px] sm:text-sm font-black text-pink-700 bg-white/90 px-2 sm:px-3 py-0.5 rounded-full border border-pink-200">
+            {diceResult.bodyPart.korean} {diceResult.count}개! 💖
           </span>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {onPrev && (
             <button
               type="button"
@@ -64,32 +66,32 @@ export const DrawingScreen: React.FC<DrawingScreenProps> = ({
                 playClick();
                 onPrev();
               }}
-              className="px-3.5 py-2.5 bg-white hover:bg-slate-100 active:scale-95 text-slate-700 font-bold text-sm rounded-xl shadow-xs border border-slate-200 transition-all flex items-center gap-1.5"
+              className="px-2.5 sm:px-3.5 py-1.5 bg-white hover:bg-pink-50 active:scale-95 text-pink-700 font-bold text-xs sm:text-sm rounded-full shadow-xs border border-pink-200 transition-all flex items-center gap-1"
               title="이전으로 이동"
             >
-              <ChevronLeft className="w-5 h-5" />
-              <span>이전으로</span>
+              <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-500" />
+              <span className="hidden sm:inline">이전으로</span>
             </button>
           )}
 
           <button
             type="button"
             onClick={handleSpeakInstruction}
-            className="p-2.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-xl shadow-md transition-all flex items-center gap-1.5 font-bold"
+            className="p-1.5 sm:p-2 bg-pink-500 hover:bg-pink-600 active:scale-95 text-white rounded-full shadow-xs transition-all flex items-center gap-1 font-bold"
             title="Listen Instruction"
           >
-            <Volume2 className="w-6 h-6" />
-            <span className="hidden sm:inline text-sm">듣기</span>
+            <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline text-xs sm:text-sm">듣기</span>
           </button>
 
-          {/* [다음] 버튼 (화면 오른쪽 상단/하단 모두 편하게 접근 가능하도록) */}
+          {/* [다음] 버튼 */}
           <button
             type="button"
             onClick={handleNextClick}
-            className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-base md:text-lg rounded-xl shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-2 border-2 border-white"
+            className="px-3 sm:px-5 py-1.5 sm:py-2 bg-gradient-to-r from-purple-400 via-violet-400 to-indigo-400 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs sm:text-base rounded-full shadow-md hover:scale-102 active:scale-95 transition-all flex items-center gap-1 border-2 border-white"
           >
             <span>{isFinalRound ? '몬스터 완성하기' : '다음'}</span>
-            {isFinalRound ? <CheckCircle className="w-5 h-5" /> : <ArrowRight className="w-5 h-5" />}
+            {isFinalRound ? <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
           </button>
         </div>
       </div>
@@ -100,17 +102,6 @@ export const DrawingScreen: React.FC<DrawingScreenProps> = ({
           initialDataUrl={canvasDataUrl}
           onCanvasSave={onCanvasSave}
         />
-      </div>
-
-      {/* Bottom bar for mobile next button if needed */}
-      <div className="mt-2 flex items-center justify-end px-2 sm:hidden">
-        <button
-          type="button"
-          onClick={handleNextClick}
-          className="px-5 py-2.5 bg-emerald-500 text-white font-black rounded-xl shadow-sm"
-        >
-          {isFinalRound ? '완성하기' : '다음 ➡️'}
-        </button>
       </div>
     </div>
   );

@@ -49,7 +49,7 @@ export const MonsterGuideModal: React.FC<MonsterGuideModalProps> = ({ isOpen, on
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-black text-slate-800 text-base leading-tight truncate">
-                  {part.word}
+                  {part.displayWord || `${part.word}(s)`}
                 </div>
                 <div className="text-xs text-slate-500 font-bold">
                   {part.korean}

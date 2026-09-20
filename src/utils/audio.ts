@@ -1,4 +1,4 @@
-// Audio helper for TTS and Web Audio synth effects
+// Web Audio API Sound Effects + Speech Synthesis (TTS)
 
 let isMuted = false;
 let audioCtx: AudioContext | null = null;
@@ -6,9 +6,9 @@ let audioCtx: AudioContext | null = null;
 function getAudioContext(): AudioContext | null {
   if (typeof window === 'undefined') return null;
   if (!audioCtx) {
-    const AudioCtxClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    if (AudioCtxClass) {
-      audioCtx = new AudioCtxClass();
+    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (AudioContextClass) {
+      audioCtx = new AudioContextClass();
     }
   }
   if (audioCtx && audioCtx.state === 'suspended') {
@@ -29,7 +29,213 @@ export function getIsMuted(): boolean {
   return isMuted;
 }
 
-// Cache voices when available
+export function playClick(): void {
+  if (isMuted) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  try {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(600, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.05);
+
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + 0.05);
+  } catch {
+    // ignore
+  }
+}
+
+export function playDiceRollSound(): void {
+  if (isMuted) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  try {
+    const now = ctx.currentTime;
+    for (let i = 0; i < 6; i++) {
+      const time = now + i * 0.08;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(220 + Math.random() * 260, time);
+
+      gain.gain.setValueAtTime(0.12, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.06);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(time);
+      osc.stop(time + 0.06);
+    }
+  } catch {
+    // ignore
+  }
+}
+
+export function playDiceStopSound(): void {
+  if (isMuted) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  try {
+    const now = ctx.currentTime;
+    const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+    notes.forEach((freq, idx) => {
+      const time = now + idx * 0.06;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, time);
+
+      gain.gain.setValueAtTime(0.18, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.18);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(time);
+      osc.stop(time + 0.18);
+    });
+  } catch {
+    // ignore
+  }
+}
+
+export function playSuccessChime(): void {
+  if (isMuted) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  try {
+    const now = ctx.currentTime;
+    const chord = [523.25, 659.25, 783.99, 1046.5]; // C, E, G, High C
+    chord.forEach((freq, idx) => {
+      const time = now + idx * 0.08;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, time);
+
+      gain.gain.setValueAtTime(0.2, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.4);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(time);
+      osc.stop(time + 0.4);
+    });
+  } catch {
+    // ignore
+  }
+}
+
+export function playStarEarned(): void {
+  if (isMuted) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  try {
+    const now = ctx.currentTime;
+    const arpeggio = [659.25, 830.61, 987.77, 1318.51];
+    arpeggio.forEach((freq, idx) => {
+      const time = now + idx * 0.07;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, time);
+
+      gain.gain.setValueAtTime(0.2, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.35);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(time);
+      osc.stop(time + 0.35);
+    });
+  } catch {
+    // ignore
+  }
+}
+
+export function playTryAgainSound(): void {
+  if (isMuted) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  try {
+    const now = ctx.currentTime;
+    const notes = [392.0, 329.63]; // G4 -> E4
+    notes.forEach((freq, idx) => {
+      const time = now + idx * 0.12;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, time);
+
+      gain.gain.setValueAtTime(0.12, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(time);
+      osc.stop(time + 0.2);
+    });
+  } catch {
+    // ignore
+  }
+}
+
+// Banned voices that sound aged, stern, monotone or robotic
+const BANNED_VOICE_NAMES = [
+  'victoria',
+  'karen',
+  'daniel',
+  'oliver',
+  'george',
+  'david',
+  'mark',
+  'richard',
+  'fiona',
+  'grandma',
+  'elder',
+  'whisper',
+  'zarvox',
+  'trinoids',
+  'deranged',
+  'bad news',
+  'cellos',
+  'good news',
+  'bells',
+  'pipe organ',
+  'hysterical',
+  'fred',
+  'alex',
+  'ralph',
+  'tom',
+  'bruce',
+  'albert',
+  'junior'
+];
+
 let cachedVoices: SpeechSynthesisVoice[] = [];
 if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
   cachedVoices = window.speechSynthesis.getVoices();
@@ -39,58 +245,83 @@ if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
 }
 
 /**
- * Selects the best available child or youthful voice for speech synthesis
+ * Selects the best available lively, natural, high-intonation voice for children.
+ * Prioritizes high quality neural/natural expressive voices (Google, Natural, Siri, Samantha, Jenny, Ava, etc.)
  */
-function getChildVoice(voices: SpeechSynthesisVoice[]): { voice: SpeechSynthesisVoice | null; isNativeChild: boolean } {
+function getChildVoice(voices: SpeechSynthesisVoice[]): { voice: SpeechSynthesisVoice | null; voiceType: 'natural' | 'playful' | 'standard' } {
   if (!voices || voices.length === 0) {
-    return { voice: null, isNativeChild: false };
+    return { voice: null, voiceType: 'standard' };
   }
 
-  const enVoices = voices.filter((v) => v.lang && v.lang.toLowerCase().startsWith('en'));
+  // Filter for English voices first, excluding any elderly/robotic banned voices
+  const enVoices = voices.filter((v) => {
+    if (!v.lang || !v.lang.toLowerCase().startsWith('en')) return false;
+    const name = v.name.toLowerCase();
+    return !BANNED_VOICE_NAMES.some((banned) => name.includes(banned));
+  });
+
   const candidatePool = enVoices.length > 0 ? enVoices : voices;
 
-  // 1. Look for native child / kid / junior / young voices
-  const nativeChildVoice = candidatePool.find((v) => {
+  // 1. First priority: High-quality Natural / Neural / Expressive kid-friendly voices
+  // Microsoft/Google/Apple high-end voices with natural human intonation
+  const premiumNaturalVoice = candidatePool.find((v) => {
     const name = v.name.toLowerCase();
     return (
-      name.includes('child') ||
-      name.includes('kid') ||
-      name.includes('junior') ||
-      name.includes('ana') ||
-      name.includes('maisie') ||
-      name.includes('young')
-    );
-  });
-  if (nativeChildVoice) {
-    return { voice: nativeChildVoice, isNativeChild: true };
-  }
-
-  // 2. Look for bright, youthful female voices (Flo, Sandy, Jenny, Samantha, Natural)
-  const youthfulVoice = candidatePool.find((v) => {
-    const name = v.name.toLowerCase();
-    return (
-      name.includes('flo') ||
-      name.includes('sandy') ||
-      name.includes('jenny') ||
+      (name.includes('natural') && (name.includes('jenny') || name.includes('aria') || name.includes('ana') || name.includes('guy') || name.includes('ava'))) ||
+      name.includes('google us english') ||
       name.includes('samantha') ||
-      name.includes('natural') ||
-      name.includes('victoria') ||
-      name.includes('karen')
+      name.includes('siri') ||
+      name.includes('kendra') ||
+      name.includes('zoe') ||
+      name.includes('ivy')
     );
   });
-  if (youthfulVoice) {
-    return { voice: youthfulVoice, isNativeChild: false };
+  if (premiumNaturalVoice) {
+    return { voice: premiumNaturalVoice, voiceType: 'natural' };
   }
 
-  // 3. Fallback to Google US English or default
-  const defaultEnVoice = candidatePool.find(
-    (v) => v.name.toLowerCase().includes('google') || v.default
-  );
-  return { voice: defaultEnVoice || candidatePool[0] || null, isNativeChild: false };
+  // 2. Second priority: Playful, friendly character voices
+  const playfulVoice = candidatePool.find((v) => {
+    const name = v.name.toLowerCase();
+    return (
+      name.includes('sandy') ||
+      name.includes('flo') ||
+      name.includes('shelley') ||
+      name.includes('eddy') ||
+      name.includes('reed')
+    );
+  });
+  if (playfulVoice) {
+    return { voice: playfulVoice, voiceType: 'playful' };
+  }
+
+  // 3. Third priority: Cheerful US/UK female voices
+  const friendlyFemaleVoice = candidatePool.find((v) => {
+    const name = v.name.toLowerCase();
+    return (
+      name.includes('ava') ||
+      name.includes('jenny') ||
+      name.includes('aria') ||
+      name.includes('salli') ||
+      name.includes('allison') ||
+      name.includes('tessa') ||
+      name.includes('kathy') ||
+      name.includes('victoria') === false
+    );
+  });
+  if (friendlyFemaleVoice) {
+    return { voice: friendlyFemaleVoice, voiceType: 'standard' };
+  }
+
+  // 4. Default fallback: first available clean English voice
+  const defaultEn = candidatePool.find((v) => v.lang.startsWith('en-US')) || candidatePool[0];
+  return { voice: defaultEn || null, voiceType: 'standard' };
 }
 
+let activeSpeechTimer: ReturnType<typeof setTimeout> | null = null;
+
 /**
- * Speaks English text using a cheerful, bright child voice (어린이 목소리)
+ * Speaks English text using a cheerful, lively, and warm tone with kid-friendly intonation (높낮이가 살아있는 목소리)
  */
 export function speakEnglish(text: string, onEnd?: () => void): void {
   if (isMuted || typeof window === 'undefined' || !('speechSynthesis' in window)) {
@@ -99,27 +330,73 @@ export function speakEnglish(text: string, onEnd?: () => void): void {
   }
 
   try {
+    if (activeSpeechTimer) {
+      clearTimeout(activeSpeechTimer);
+      activeSpeechTimer = null;
+    }
     window.speechSynthesis.cancel(); // cancel any active utterance
 
-    // Small delay ensures Chrome/Safari speech queue clears without dropping the next utterance
-    setTimeout(() => {
+    // Clean up text:
+    // 1. Handle foot(feet) pattern: e.g. "Draw 1 foot(feet)!" -> "Draw 1 foot!", "Draw 4 foot(feet)!" -> "Draw 4 feet!"
+    let cleanText = text.replace(/(\b\d+\s+)foot\(feet\)/gi, (_match, countPrefix) => {
+      const num = parseInt(countPrefix.trim(), 10);
+      return num === 1 ? `${countPrefix}foot` : `${countPrefix}feet`;
+    });
+
+    // 2. If text contains e.g. "Draw 4 eye(s)!" or "1 nose(s)", convert to grammatically accurate speech:
+    //    count === 1 -> singular ("1 nose")
+    //    count > 1  -> plural ("4 eyes", "2 feet")
+    cleanText = cleanText.replace(/(\b\d+\s+)([a-zA-Z]+)\(s\)/gi, (_match, countPrefix, baseWord) => {
+      const num = parseInt(countPrefix.trim(), 10);
+      const lower = baseWord.toLowerCase();
+      if (num === 1) {
+        return `${countPrefix}${baseWord}`;
+      }
+      if (lower === 'foot') {
+        return `${countPrefix}feet`;
+      }
+      if (lower.endsWith('ch') || lower.endsWith('sh') || lower.endsWith('s') || lower.endsWith('x') || lower.endsWith('z')) {
+        return `${countPrefix}${baseWord}es`;
+      }
+      return `${countPrefix}${baseWord}s`;
+    });
+
+    // 3. Remove any remaining dangling "(s)" or "(feet)"
+    cleanText = cleanText.replace(/\(s\)/gi, '').replace(/\(feet\)/gi, '').replace(/\s+/g, ' ').trim();
+
+    // Add lively punctuation cues if missing, giving natural rise and fall to the sentence
+    if (!/[.!?]$/.test(cleanText)) {
+      cleanText += '!';
+    }
+
+    activeSpeechTimer = setTimeout(() => {
+      activeSpeechTimer = null;
       try {
-        const utterance = new SpeechSynthesisUtterance(text);
+        const utterance = new SpeechSynthesisUtterance(cleanText);
         utterance.lang = 'en-US';
 
-        const voices =
-          cachedVoices.length > 0 ? cachedVoices : window.speechSynthesis.getVoices();
-        const { voice, isNativeChild } = getChildVoice(voices);
+        const rawVoices = window.speechSynthesis.getVoices();
+        const voices = rawVoices.length > 0 ? rawVoices : cachedVoices;
+        const { voice, voiceType } = getChildVoice(voices);
 
         if (voice) {
           utterance.voice = voice;
         }
 
-        // Child voice tuning:
-        // Native child voices (like Apple 'Junior' or Azure 'Ana') already have higher pitch
-        // Standard voices (Samantha, Jenny, Google) need pitch=1.45 to sound like an enthusiastic, cute child
-        utterance.pitch = isNativeChild ? 1.25 : 1.46;
-        utterance.rate = 0.95; // Lively, clear child tempo
+        // Child-friendly dynamic pitch & rate:
+        // - Rate: 0.88-0.92 gives bright energy without dragging or sounding like a sluggish robot
+        // - Pitch: 1.28-1.35 creates a cheerful, animated "storybook teacher" intonation that children love
+        if (voiceType === 'natural') {
+          utterance.pitch = 1.26;
+          utterance.rate = 0.90;
+        } else if (voiceType === 'playful') {
+          utterance.pitch = 1.18;
+          utterance.rate = 0.92;
+        } else {
+          utterance.pitch = 1.32;
+          utterance.rate = 0.89;
+        }
+
         utterance.volume = 1.0;
 
         if (onEnd) {
@@ -134,151 +411,5 @@ export function speakEnglish(text: string, onEnd?: () => void): void {
     }, 40);
   } catch {
     if (onEnd) onEnd();
-  }
-}
-
-/**
- * Synthesizes a playful sound effect using Web Audio API
- */
-export function playClick(): void {
-  if (isMuted) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
-
-  try {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const now = ctx.currentTime;
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(440, now);
-    osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
-
-    gain.gain.setValueAtTime(0.12, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start(now);
-    osc.stop(now + 0.08);
-  } catch {
-    // ignore
-  }
-}
-
-export function playDiceRoll(): void {
-  if (isMuted) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
-
-  try {
-    const now = ctx.currentTime;
-    for (let i = 0; i < 6; i++) {
-      const timeOffset = i * 0.08 + Math.random() * 0.03;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(200 + Math.random() * 400, now + timeOffset);
-
-      gain.gain.setValueAtTime(0.15, now + timeOffset);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + timeOffset + 0.05);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start(now + timeOffset);
-      osc.stop(now + timeOffset + 0.06);
-    }
-  } catch {
-    // ignore
-  }
-}
-
-export function playSuccessChime(): void {
-  if (isMuted) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
-
-  try {
-    const now = ctx.currentTime;
-    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 xylophone / bell
-    notes.forEach((freq, idx) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      const startTime = now + idx * 0.09;
-
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, startTime);
-
-      gain.gain.setValueAtTime(0.2, startTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start(startTime);
-      osc.stop(startTime + 0.36);
-    });
-  } catch {
-    // ignore
-  }
-}
-
-export function playTryAgainSound(): void {
-  if (isMuted) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
-
-  try {
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(320, now);
-    osc.frequency.linearRampToValueAtTime(240, now + 0.2);
-
-    gain.gain.setValueAtTime(0.12, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start(now);
-    osc.stop(now + 0.21);
-  } catch {
-    // ignore
-  }
-}
-
-export function playStarEarned(): void {
-  if (isMuted) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
-
-  try {
-    const now = ctx.currentTime;
-    const freqs = [784, 988, 1175, 1568]; // G5, B5, D6, G6
-    freqs.forEach((f, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      const st = now + i * 0.07;
-
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(f, st);
-
-      gain.gain.setValueAtTime(0.18, st);
-      gain.gain.exponentialRampToValueAtTime(0.001, st + 0.28);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start(st);
-      osc.stop(st + 0.3);
-    });
-  } catch {
-    // ignore
   }
 }
